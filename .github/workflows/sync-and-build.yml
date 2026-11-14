@@ -35,7 +35,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          brew install bash blacktop/tap/ipsw cmake ninja
+          brew install bash blacktop/tap/ipsw cmake ninja coreutils gnu-sed gawk
+          echo "$(brew --prefix coreutils)/libexec/gnubin" >> $GITHUB_PATH
 
       - name: Setup Xcode
         run: |
