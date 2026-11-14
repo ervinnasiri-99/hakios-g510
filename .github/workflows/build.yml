@@ -17,12 +17,13 @@ jobs:
     runs-on: macos-latest
     timeout-minutes: 180
     steps:
-      - name: Checkout HakiOS kernel repo
+      - name: Checkout HakiOS kernel repo (mtk branch for MT6765 support)
         uses: actions/checkout@v4
         with:
           repository: oosexgang/hakios-xnu-kernel
           token: ${{ secrets.GITHUB_TOKEN }}
           path: hakios-xnu-kernel
+          ref: mtk
           submodules: recursive
 
       - name: Checkout G510 device repo
