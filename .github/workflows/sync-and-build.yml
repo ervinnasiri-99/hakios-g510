@@ -39,7 +39,7 @@ jobs:
 
       - name: Setup Xcode
         run: |
-          sudo xcode-select -s /Applications/Xcode_15.4.app
+          # Use default Xcode
 
       - name: Setup build deps (cctools, SDK, theos)
         run: |
