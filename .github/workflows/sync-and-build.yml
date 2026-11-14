@@ -51,6 +51,11 @@ jobs:
           cd ${GITHUB_WORKSPACE}/hakios-xnu-kernel
           ./xnu/apply.sh
 
+      - name: Build ath11k Wi-Fi object (for REDWOOD_OBJECTS)
+        run: |
+          cd ${GITHUB_WORKSPACE}/hakios-xnu-kernel
+          ./tools/mk-ath11k.sh
+
       - name: Build kernel
         run: |
           cd ${GITHUB_WORKSPACE}/hakios-xnu-kernel
