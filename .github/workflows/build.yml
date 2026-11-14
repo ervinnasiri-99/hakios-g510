@@ -70,7 +70,7 @@ jobs:
         run: |
           cd ${GITHUB_WORKSPACE}/hakios-xnu-kernel
           source xnu-env.sh
-          ./xnu-build.sh -j$(sysctl -n hw.ncpu) -k 2>&1 | tee build.log
+          ./xnu-build.sh -j$(sysctl -n hw.ncpu) -k LD_KERNEL_ARCHIVES="" 2>&1 | tee build.log
         continue-on-error: true
       - name: Check build log on failure
         if: failure()
