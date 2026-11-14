@@ -42,6 +42,8 @@ jobs:
           cp -r ${GITHUB_WORKSPACE}/hakios-g510/kernel/soc ${GITHUB_WORKSPACE}/hakios-xnu-kernel/devices/g510/
           # Copy bsd/ (driver source files)
           cp -r ${GITHUB_WORKSPACE}/hakios-g510/kernel/bsd ${GITHUB_WORKSPACE}/hakios-xnu-kernel/devices/g510/
+          # Copy tools/ directory for hakios-config.py
+          cp -r ${GITHUB_WORKSPACE}/hakios-g510/tools ${GITHUB_WORKSPACE}/hakios-xnu-kernel/devices/g510/ 2>/dev/null || true
           ls -la ${GITHUB_WORKSPACE}/hakios-xnu-kernel/devices/g510/
 
       - name: Install dependencies
