@@ -43,37 +43,37 @@ jobs:
 
       - name: Setup build deps (cctools, SDK, theos)
         run: |
-          cd hakios-xnu-kernel
+          cd ${GITHUB_WORKSPACE}/hakios-xnu-kernel
           ./xnu-deps/setup.sh
 
       - name: Build kernel
         run: |
-          cd hakios-xnu-kernel
+          cd ${GITHUB_WORKSPACE}/hakios-xnu-kernel
           source xnu-env.sh
           ./xnu-build.sh -j$(sysctl -n hw.ncpu) -k
 
       - name: Fetch IPSW (iOS 16.5 20F66)
         run: |
-          cd hakios-xnu-kernel
+          cd ${GITHUB_WORKSPACE}/hakios-xnu-kernel
           ./ios165/fetch.sh
         env:
           IPSW_URL: https://updates.cdn-apple.com/2023SummerFCS/fullrestores/042-07939/3E8D0B5C-1C2E-4E8B-9F8C-3D8E9F1A2B4C/iPhone_4.0_64bit_16.5_20F66_Restore.ipsw
 
       - name: Build userland
         run: |
-          cd hakios-xnu-kernel
+          cd ${GITHUB_WORKSPACE}/hakios-xnu-kernel
           ./userland/build.sh
 
       - name: Pull firmware from device
         run: |
-          cd hakios-g510
+          cd ${GITHUB_WORKSPACE}/hakios-g510
           ./pull-firmware.sh
         env:
           HAKIOS_SERIAL: ${{ secrets.HAKIOS_SERIAL }}
 
       - name: Build boot image and run test
         run: |
-          cd hakios-g510
+          cd ${GITHUB_WORKSPACE}/hakios-g510
           XNU_SECS=120 XNU_ARGS="cpus=8 touchscreen=1 buttons=2 mtk_cpufreq=3 emmc_root=1 connsys_step=11" \
             tools/xnu-cycle.sh
         env:
