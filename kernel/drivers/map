@@ -1,0 +1,16 @@
+# drivers/map: the list of driver files and their subsystem. One line per file: "subsystem path-in-tree".
+# tools/hakios-config.py reads this; xnu/apply.sh copies each file from drivers/<subsystem>/<name> to the tree.
+# xnu/export.sh checks this list against the conf files.
+
+bluetooth	bsd/dev/g510_mtkbt.c
+audio	bsd/dev/g510_mtkaudio.c
+audio	bsd/dev/g510_mtkpwrap.c
+audio	bsd/dev/g510_mtkspk.c
+audio	bsd/dev/g510_mtkmic.c
+power	bsd/dev/g510_mtkbatt.c
+power	bsd/dev/g510_cpufreq.c
+power	bsd/dev/g510_mtkthermal.c
+power	bsd/dev/g510_mtkpwrap.c
+gpu	bsd/dev/g510_mtkpvrgpu.c
+camera	bsd/dev/g510_mtkcam.c
+storage	bsd/dev/g510_emmc.c
