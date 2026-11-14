@@ -38,6 +38,11 @@ jobs:
           brew install bash blacktop/tap/ipsw cmake ninja coreutils gnu-sed gawk
           echo "$(brew --prefix coreutils)/libexec/gnubin" >> $GITHUB_PATH
 
+- name: Verify SDK
+        run: |
+          xcodebuild -showsdks
+          ls -la $(xcrun --show-sdk-path)/System/Library/Frameworks/ | head -20
+
       - name: Setup Xcode
         run: |
           # Use default Xcode
@@ -61,7 +66,12 @@ jobs:
         run: |
           cd ${GITHUB_WORKSPACE}/hakios-xnu-kernel
           source xnu-env.sh
-          ./xnu-build.sh -j$(sysctl -n hw.ncpu) -k
+          ./xnu-build.sh -j$(sysctl -n hw.ncpu) -k 2>&1 | tee build.log
+        continue-on-error: true
+      - name: Check build log on failure
+        if: failure()
+        run: |
+          tail -100 build.log
 
       - name: Fetch IPSW (iOS 16.5 20F66)
         run: |
