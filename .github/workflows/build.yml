@@ -102,12 +102,12 @@ jobs:
           cd ${GITHUB_WORKSPACE}/hakios-xnu-kernel
           ./userland/build.sh
 
-      - name: Pull firmware from device
+      - name: Prepare firmware (copy from repo for CI)
         run: |
           cd ${GITHUB_WORKSPACE}/hakios-g510
-          ./pull-firmware.sh
-        env:
-          HAKIOS_SERIAL: ${{ secrets.HAKIOS_SERIAL }}
+          mkdir -p fw-touch fw-connsys
+          # Firmware files are already committed for CI
+          ls -la fw-touch/ fw-connsys/
 
       - name: Build boot image and run test
         run: |
