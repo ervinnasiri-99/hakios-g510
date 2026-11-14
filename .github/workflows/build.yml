@@ -32,14 +32,10 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           path: hakios-g510
 
-      - name: Copy G510 configs to kernel repo
-        run: |
-          cp -r ${GITHUB_WORKSPACE}/hakios-g510/configs ${GITHUB_WORKSPACE}/hakios-xnu-kernel/configs/
-          ls -la ${GITHUB_WORKSPACE}/hakios-xnu-kernel/configs/
-
-      - name: Copy G510 kernel drivers to kernel repo
+      - name: Copy G510 device files to kernel repo
         run: |
           mkdir -p ${GITHUB_WORKSPACE}/hakios-xnu-kernel/devices/g510
+          cp -r ${GITHUB_WORKSPACE}/hakios-g510/configs ${GITHUB_WORKSPACE}/hakios-xnu-kernel/devices/g510/
           cp -r ${GITHUB_WORKSPACE}/hakios-g510/kernel ${GITHUB_WORKSPACE}/hakios-xnu-kernel/devices/g510/
           cp ${GITHUB_WORKSPACE}/hakios-g510/device.conf ${GITHUB_WORKSPACE}/hakios-xnu-kernel/devices/g510/
           ls -la ${GITHUB_WORKSPACE}/hakios-xnu-kernel/devices/g510/
