@@ -35,10 +35,13 @@ jobs:
 
       - name: Copy G510 device files to kernel repo
         run: |
+          rm -rf ${GITHUB_WORKSPACE}/hakios-xnu-kernel/devices/g510
           mkdir -p ${GITHUB_WORKSPACE}/hakios-xnu-kernel/devices/g510
           cp -r ${GITHUB_WORKSPACE}/hakios-g510/configs ${GITHUB_WORKSPACE}/hakios-xnu-kernel/devices/g510/
           cp -r ${GITHUB_WORKSPACE}/hakios-g510/kernel ${GITHUB_WORKSPACE}/hakios-xnu-kernel/devices/g510/
           cp ${GITHUB_WORKSPACE}/hakios-g510/device.conf ${GITHUB_WORKSPACE}/hakios-xnu-kernel/devices/g510/
+          # Also copy soc.conf to the device's soc/ directory
+          cp ${GITHUB_WORKSPACE}/hakios-g510/kernel/soc/soc.conf ${GITHUB_WORKSPACE}/hakios-xnu-kernel/devices/g510/soc/ 2>/dev/null || true
           ls -la ${GITHUB_WORKSPACE}/hakios-xnu-kernel/devices/g510/
 
       - name: Install dependencies
