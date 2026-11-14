@@ -36,8 +36,12 @@ jobs:
           # Copy device.conf and configs from device repo root
           cp ${GITHUB_WORKSPACE}/hakios-g510/device.conf ${GITHUB_WORKSPACE}/hakios-xnu-kernel/devices/g510/
           cp -r ${GITHUB_WORKSPACE}/hakios-g510/configs ${GITHUB_WORKSPACE}/hakios-xnu-kernel/devices/g510/
-          # Copy entire kernel/ directory from device repo (contains bsd/, soc/, devices/, etc.)
-          cp -r ${GITHUB_WORKSPACE}/hakios-g510/kernel ${GITHUB_WORKSPACE}/hakios-xnu-kernel/devices/g510/
+          # Copy drivers/ directory for hakios-config.py to find device drivers
+          cp -r ${GITHUB_WORKSPACE}/hakios-g510/kernel/drivers ${GITHUB_WORKSPACE}/hakios-xnu-kernel/devices/g510/
+          # Copy soc/ directory (SoC layer with soc.conf and configs/mt6765.config)
+          cp -r ${GITHUB_WORKSPACE}/hakios-g510/kernel/soc ${GITHUB_WORKSPACE}/hakios-xnu-kernel/devices/g510/
+          # Copy bsd/ (driver source files)
+          cp -r ${GITHUB_WORKSPACE}/hakios-g510/kernel/bsd ${GITHUB_WORKSPACE}/hakios-xnu-kernel/devices/g510/
           ls -la ${GITHUB_WORKSPACE}/hakios-xnu-kernel/devices/g510/
 
       - name: Install dependencies
