@@ -46,6 +46,11 @@ jobs:
           cd ${GITHUB_WORKSPACE}/hakios-xnu-kernel
           ./xnu-deps/setup.sh
 
+      - name: Apply XNU patches
+        run: |
+          cd ${GITHUB_WORKSPACE}/hakios-xnu-kernel
+          ./xnu/apply.sh
+
       - name: Build kernel
         run: |
           cd ${GITHUB_WORKSPACE}/hakios-xnu-kernel
