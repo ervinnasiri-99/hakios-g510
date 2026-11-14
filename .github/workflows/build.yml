@@ -37,6 +37,11 @@ jobs:
           brew install bash blacktop/tap/ipsw cmake ninja coreutils gnu-sed gawk
           echo "$(brew --prefix coreutils)/libexec/gnubin" >> $GITHUB_PATH
 
+      - name: Copy ios165 to workspace
+        run: |
+          cp -r ${GITHUB_WORKSPACE}/hakios-xnu-kernel/ios165 ${GITHUB_WORKSPACE}/ios165
+          ls -la ${GITHUB_WORKSPACE}/ios165/
+
       - name: Verify SDK
         run: |
           xcodebuild -showsdks
@@ -74,7 +79,7 @@ jobs:
 
       - name: Fetch IPSW (iOS 16.5 20F66)
         run: |
-          cd ${GITHUB_WORKSPACE}/hakios-xnu-kernel
+          cd ${GITHUB_WORKSPACE}
           ./ios165/fetch.sh
         env:
           IPSW_URL: https://updates.cdn-apple.com/2023SummerFCS/fullrestores/042-07939/3E8D0B5C-1C2E-4E8B-9F8C-3D8E9F1A2B4C/iPhone_4.0_64bit_16.5_20F66_Restore.ipsw
@@ -83,11 +88,11 @@ jobs:
         if: failure()
         run: |
           ls -la ios165/ 2>/dev/null || echo "ios165 not in workspace"
-          ls -la ${GITHUB_WORKSPACE}/hakios-xnu-kernel/ios165/ 2>/dev/null || echo "ios165 not in common tree"
-      - name: Fetch IPSW from common tree (fallback)
+          ls -la ${GITHUB_WORKSPACE}/ios165/ 2>/dev/null || echo "ios165 not in workspace root"
+      - name: Fetch IPSW from workspace (fallback)
         if: failure()
         run: |
-          cd ${GITHUB_WORKSPACE}/hakios-xnu-kernel
+          cd ${GITHUB_WORKSPACE}
           ./ios165/fetch.sh
         env:
           IPSW_URL: https://updates.cdn-apple.com/2023SummerFCS/fullrestores/042-07939/3E8D0B5C-1C2E-4E8B-9F8C-3D8E9F1A2B4C/iPhone_4.0_64bit_16.5_20F66_Restore.ipsw
