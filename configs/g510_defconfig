@@ -1,0 +1,9 @@
+# HakiOS defconfig for the General Mobile GM 21 Plus (G510, MediaTek MT6765): the common kernel's configuration, the MT6765's facts and
+# drivers (mtk/mt6765/configs/mt6765.config in the common repository, which leaves every Qualcomm driver out) and this phone's own.
+# What the project's own phone line uses, with the chip's identity and the sensors read (and the run stopped at 105 degrees, the thermal driver's default) as the only additions.
+# Needs the phone's own firmware pulled from your phone (devices/g510/pull-firmware.sh): `tools/hakios-config.py needs`.
+# devices/g510/device.conf: what this device repository is. tools/hakios-device.py reads it; docs/porting/repositories.md has
+# every word, and the device's page (docs/devices/g510.md) is made from it, so that the status is said in one place.
+#include common_defconfig
+#include mt6765.config
+#include g510.config
