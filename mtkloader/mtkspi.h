@@ -1,6 +1,6 @@
 /*
- * The phone's SPI0 (0x1100a000), where its touch screen is: a Novatek NT36525
- * controller (Android drives it as focaltech,fts). Registers follow Linux's
+ * The phone's SPI2 (0x11012000), where its touch screen is: a Synaptics/OmniVision TCM
+ * controller (Android drives it as omnivision_tcm_spi, see docs/touch-handover.md). Registers follow Linux's
  * drivers/spi/spi-mt65xx.c for "mediatek,mt6765-spi", which is what the phone's own device tree
  * calls this controller.
  *
@@ -12,12 +12,12 @@
 
 #include <stdint.h>
 
-#define SPI0_BASE            0x1100a000ULL
+#define SPI2_BASE            0x11012000ULL
 #define INFRACFG_BASE        0x10001000ULL
 #define TOPCKGEN_BASE        0x10000000ULL
 
 /*
- * Where the bit clock comes from (Linux clk-mt6765.c): the "spi_sel" mux is two bits at 24 in
+ * Where the bit clock comes from (Linux clk-mt6768.c): the "spi_sel" mux is two bits at 24 in
  * CLK_CFG_2, with a power-down bit at 31, and each of these registers has a companion that clears
  * whatever bits you write to it. Source 0 is the 26 MHz crystal, which needs no PLL to be running
  * and is the one thing certain to be there this early.
@@ -75,31 +75,32 @@
 #define SPI_FIFO_BYTES       32
 
 /*
- * The pins. On this chip SPI0 is GPIO17 (CSB), 18 (MO), 19 (CLK) and 20 (MI), each at function 2
- * -- from the MT6765 pin table. A pin's function is four bits in GPIO_MODE<n> at
- * 0x10005300 + 0x10 per eight pins, so all four live in GPIO_MODE2.
+ * The pins. On this chip SPI2 is GPIO25 (CSB), 26 (MO), 27 (CLK) and 28 (MI), each at function 2
+ * -- from the MT6768 pin table, not the MT6765 one it is so often confused with, where those
+ * functions sit on GPIO17-20 instead. A pin's function is four bits in GPIO_MODE<n> at
+ * 0x10005300 + 0x10 per eight pins, so all four live in GPIO_MODE3.
  *
  * The preloader already sets them, which is why the phone's device tree carries no pinctrl state
  * for them -- Linux never has to. We set them anyway: it costs nothing and says what we rely on.
  */
 #define GPIO_BASE            0x10005000ULL
-#define GPIO_MODE2           0x320
-#define SPI0_PIN_FUNC        2
-#define SPI0_PIN_CS          17
-#define SPI0_PIN_MO          18
-#define SPI0_PIN_CLK         19
-#define SPI0_PIN_MI          20
+#define GPIO_MODE3           0x330
+#define SPI2_PIN_FUNC        2
+#define SPI2_PIN_CS          25
+#define SPI2_PIN_MO          26
+#define SPI2_PIN_CLK         27
+#define SPI2_PIN_MI          28
 
-static void spi_pins_to_spi0(void)
+static void spi_pins_to_spi2(void)
 {
-	uint32_t mode = rd32(GPIO_BASE + GPIO_MODE2);
+	uint32_t mode = rd32(GPIO_BASE + GPIO_MODE3);
 
-	for (int pin = SPI0_PIN_CS; pin <= SPI0_PIN_MI; pin++) {
+	for (int pin = SPI2_PIN_CS; pin <= SPI2_PIN_MI; pin++) {
 		uint32_t shift = (uint32_t)(pin % 8) * 4;
 
-		mode = (mode & ~(0xfu << shift)) | ((uint32_t)SPI0_PIN_FUNC << shift);
+		mode = (mode & ~(0xfu << shift)) | ((uint32_t)SPI2_PIN_FUNC << shift);
 	}
-	wr32(GPIO_BASE + GPIO_MODE2, mode);
+	wr32(GPIO_BASE + GPIO_MODE3, mode);
 	__asm__ volatile("dsb sy");
 }
 
@@ -115,13 +116,13 @@ static void spi_setup(void)
 	wr32(TOPCKGEN_BASE + CLK_CFG_2_CLR, SPI_SEL_FIELD | SPI_SEL_PDN);
 	__asm__ volatile("dsb sy");
 
-	wr32(SPI0_BASE + SPI_CMD, SPI_CMD_RST);         /* whatever LK left behind */
-	wr32(SPI0_BASE + SPI_CMD, 0);
-	wr32(SPI0_BASE + SPI_CFG2, ((SPI_TICKS - 1) << SPI_CFG2_SCK_HIGH_SHIFT) |
+	wr32(SPI2_BASE + SPI_CMD, SPI_CMD_RST);         /* whatever LK left behind */
+	wr32(SPI2_BASE + SPI_CMD, 0);
+	wr32(SPI2_BASE + SPI_CFG2, ((SPI_TICKS - 1) << SPI_CFG2_SCK_HIGH_SHIFT) |
 	    ((SPI_TICKS - 1) << SPI_CFG2_SCK_LOW_SHIFT));
-	wr32(SPI0_BASE + SPI_CFG0, ((SPI_TICKS - 1) << SPI_CFG0_CS_HOLD_SHIFT) |
+	wr32(SPI2_BASE + SPI_CFG0, ((SPI_TICKS - 1) << SPI_CFG0_CS_HOLD_SHIFT) |
 	    ((SPI_TICKS - 1) << SPI_CFG0_CS_SETUP_SHIFT));
-	wr32(SPI0_BASE + SPI_PAD_SEL, 0);               /* the device tree says pad group 0 */
+	wr32(SPI2_BASE + SPI_PAD_SEL, 0);               /* the device tree says pad group 0 */
 }
 
 /*
@@ -131,14 +132,6 @@ static void spi_setup(void)
  * the controller, the controller is misconfigured; if it answers neither way, the chip is not
  * listening at all.
  */
-#define GPIO_BASE            0x10005000ULL
-#define GPIO_MODE2           0x320
-#define SPI0_PIN_FUNC        2
-#define SPI0_PIN_CS          17
-#define SPI0_PIN_MO          18
-#define SPI0_PIN_CLK         19
-#define SPI0_PIN_MI          20
-
 #define GPIO_DOUT0_SET       0x104
 #define GPIO_DOUT0_CLR       0x108
 #define GPIO_DIR0_SET        0x004
@@ -163,17 +156,17 @@ static inline void pin_settle(void)
 
 static void spi_pins_to_gpio(void)
 {
-	uint32_t mode = rd32(GPIO_BASE + GPIO_MODE2);
+	uint32_t mode = rd32(GPIO_BASE + GPIO_MODE3);
 
-	for (int pin = SPI0_PIN_CS; pin <= SPI0_PIN_MI; pin++) {
+	for (int pin = SPI2_PIN_CS; pin <= SPI2_PIN_MI; pin++) {
 		mode &= ~(0xfu << ((uint32_t)(pin % 8) * 4));
 	}
-	wr32(GPIO_BASE + GPIO_MODE2, mode);
+	wr32(GPIO_BASE + GPIO_MODE3, mode);
 	/* three of them we drive, the chip drives the fourth */
-	wr32(GPIO_BASE + GPIO_DIR0_SET, (1u << SPI0_PIN_MO) | (1u << SPI0_PIN_CLK) | (1u << SPI0_PIN_CS));
-	wr32(GPIO_BASE + GPIO_DIR0_CLR, 1u << SPI0_PIN_MI);
-	pin_set(SPI0_PIN_CS, 1);                        /* chip select idles high */
-	pin_set(SPI0_PIN_CLK, 1);                       /* and in mode 3 so does the clock */
+	wr32(GPIO_BASE + GPIO_DIR0_SET, (1u << SPI2_PIN_MO) | (1u << SPI2_PIN_CLK) | (1u << SPI2_PIN_CS));
+	wr32(GPIO_BASE + GPIO_DIR0_CLR, 1u << SPI2_PIN_MI);
+	pin_set(SPI2_PIN_CS, 1);                        /* chip select idles high */
+	pin_set(SPI2_PIN_CLK, 1);                       /* and in mode 3 so does the clock */
 	__asm__ volatile("dsb sy");
 	pin_settle();
 }
@@ -191,20 +184,20 @@ static void spi_bitbang_xfer(const uint8_t *tx, uint8_t *rx, uint32_t len, uint3
 {
 	int idle = 1;
 
-	pin_set(SPI0_PIN_CLK, idle);
-	pin_set(SPI0_PIN_CS, 0);
+	pin_set(SPI2_PIN_CLK, idle);
+	pin_set(SPI2_PIN_CS, 0);
 	pin_settle();
 
 	for (uint32_t i = 0; i < len; i++) {
 		uint8_t out_byte = tx ? tx[i] : 0xff, in_byte = 0;
 
 		for (int bit = 7; bit >= 0; bit--) {
-			pin_set(SPI0_PIN_MO, (out_byte >> bit) & 1);
-			pin_set(SPI0_PIN_CLK, !idle);           /* the edge that moves the data */
+			pin_set(SPI2_PIN_MO, (out_byte >> bit) & 1);
+			pin_set(SPI2_PIN_CLK, !idle);           /* the edge that moves the data */
 			pin_settle();
-			pin_set(SPI0_PIN_CLK, idle);            /* the edge that reads it */
+			pin_set(SPI2_PIN_CLK, idle);            /* the edge that reads it */
 			pin_settle();
-			in_byte = (uint8_t)((in_byte << 1) | pin_get(SPI0_PIN_MI));
+			in_byte = (uint8_t)((in_byte << 1) | pin_get(SPI2_PIN_MI));
 		}
 		if (rx) {
 			rx[i] = in_byte;
@@ -213,12 +206,12 @@ static void spi_bitbang_xfer(const uint8_t *tx, uint8_t *rx, uint32_t len, uint3
 			dbg_delay_us(byte_gap_us);
 		}
 	}
-	pin_set(SPI0_PIN_CS, 1);
+	pin_set(SPI2_PIN_CS, 1);
 	pin_settle();
 }
 
 /*
- * The chip's own reset, GPIO0, active low (context.md). Only for a probe that has given up on
+ * The chip's own reset, GPIO0, active low (the phone's device tree). Only for a probe that has given up on
  * reading: a reset throws away the firmware Android downloaded, and the chip comes back up in its
  * bootloader, which still answers -- it just cannot report touches until something reloads it.
  */
@@ -250,8 +243,8 @@ static int spi_xfer(const uint8_t *tx, uint8_t *rx, uint32_t len)
 	 * Linux sets them only on a big-endian host, and with them on the bytes of every word come
 	 * back in the wrong order.
 	 */
-	wr32(SPI0_BASE + SPI_CMD, SPI_CMD_CPHA | SPI_CMD_CPOL | SPI_CMD_TXMSBF | SPI_CMD_RXMSBF);
-	wr32(SPI0_BASE + SPI_CFG1, ((len - 1) << SPI_CFG1_PACKET_LEN_SHIFT) |
+	wr32(SPI2_BASE + SPI_CMD, SPI_CMD_CPHA | SPI_CMD_CPOL | SPI_CMD_TXMSBF | SPI_CMD_RXMSBF);
+	wr32(SPI2_BASE + SPI_CFG1, ((len - 1) << SPI_CFG1_PACKET_LEN_SHIFT) |
 	    (0 << SPI_CFG1_PACKET_LOOP_SHIFT) | ((SPI_TICKS - 1) << SPI_CFG1_CS_IDLE_SHIFT));
 
 	for (uint32_t w = 0; w < words; w++) {
@@ -261,12 +254,12 @@ static int spi_xfer(const uint8_t *tx, uint8_t *rx, uint32_t len)
 			uint32_t i = w * 4 + b;
 			v |= (uint32_t)(tx && i < len ? tx[i] : 0xff) << (8 * b);
 		}
-		wr32(SPI0_BASE + SPI_TX_DATA, v);
+		wr32(SPI2_BASE + SPI_TX_DATA, v);
 	}
-	wr32(SPI0_BASE + SPI_CMD, rd32(SPI0_BASE + SPI_CMD) | SPI_CMD_ACT);
+	wr32(SPI2_BASE + SPI_CMD, rd32(SPI2_BASE + SPI_CMD) | SPI_CMD_ACT);
 
 	for (uint32_t spin = 0; ; spin++) {
-		if (rd32(SPI0_BASE + SPI_STATUS0) & SPI_STATUS0_DONE) {
+		if (rd32(SPI2_BASE + SPI_STATUS0) & SPI_STATUS0_DONE) {
 			break;
 		}
 		if (spin > 2000000) {
@@ -274,7 +267,7 @@ static int spi_xfer(const uint8_t *tx, uint8_t *rx, uint32_t len)
 		}
 	}
 	for (uint32_t w = 0; w < words; w++) {
-		uint32_t v = rd32(SPI0_BASE + SPI_RX_DATA);
+		uint32_t v = rd32(SPI2_BASE + SPI_RX_DATA);
 
 		for (uint32_t b = 0; b < 4; b++) {
 			uint32_t i = w * 4 + b;

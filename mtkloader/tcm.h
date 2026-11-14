@@ -1,5 +1,5 @@
 /*
- * The touch controller's own language, TCM, over the SPI0 set up in mtkspi.h.
+ * The touch controller's own language, TCM, over the SPI2 set up in mtkspi.h.
  *
  * A message is a 0xa5 marker, a code, two bytes of payload length, the payload, and a 0x5a to
  * close it. Reading one takes several chip-select cycles because the controller's FIFO holds only
@@ -68,7 +68,7 @@ static int tcm_xfer(const uint8_t *tx, uint8_t *rx, uint32_t len)
 		spi_bitbang_xfer(tx, rx, len, TCM_SLOW_GAP_US);
 		return 1;
 	}
-	spi_pins_to_spi0();
+	spi_pins_to_spi2();
 	spi_setup();
 	if (spi_xfer(tx, rx, len)) {
 		return 1;

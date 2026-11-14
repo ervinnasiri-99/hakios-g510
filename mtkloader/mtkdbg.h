@@ -1,11 +1,11 @@
 /*
- * Debug output for bare-metal code on the G510 (MT6765) that runs with the MMU off:
+ * Debug output for bare-metal code on the X6826B (MT6768) that runs with the MMU off:
  *
  *  - plog_*: the ramoops console zone that Android's pstore keeps across a warm reset. What is
  *    written here shows up after the next Android boot as /sys/fs/pstore/console-ramoops-0.
- *    Zone layout from Android's ramoops (mem 0x47c90000 size 0x0e0000, console 0x40000): dump
- *    records first, then console at 0x47c90000. Header: sig "DBGC", start (next write), size.
- *  - fbcon_*: text on the panel. The panel is video mode (mtkfb, BURST_VDO): OVL0 layer 0
+ *    Zone layout from Android's ramoops (mem 0x4d010000 size 0xe0000, console 0x40000): dump
+ *    records first, then console at 0x4d09f000. Header: sig "DBGC", start (next write), size.
+ *  - fbcon_*: text on the panel. The panel is video mode (td4160, BURST_VDO): OVL0 layer 0
  *    scans LK's framebuffer continuously, so pixels written there appear on the next frame.
  *    OVL0 has per-pixel alpha enabled (LK sets aen=1), so every pixel needs alpha 0xff.
  *
@@ -18,12 +18,12 @@
 #include <stdint.h>
 #include "font8x16.h"
 
-#define RAMOOPS_CONSOLE      0x47c90000ULL
+#define RAMOOPS_CONSOLE      0x4d09f000ULL
 #define RAMOOPS_CONSOLE_SIZE 0x40000u
 #define RAMOOPS_SIG          0x43474244u
 /* the pmsg zone: Android's request for one XNU boot comes in it (boot-xnu.sh), the kernel's lines for the
- * host go out in it (kern.g510.host_keep) */
-#define RAMOOPS_PMSG         0x47d70000ULL
+ * host go out in it (kern.redwood.host_keep) */
+#define RAMOOPS_PMSG         0x4d0e0000ULL
 #define RAMOOPS_PMSG_SIZE    0x10000u
 
 #define TOPRGU_BASE          0x10007000ULL
@@ -36,11 +36,11 @@
 #define TOPRGU_SWRST_KEY     0x1209u
 
 /* LK's framebuffer (mblock "framebuffer"), the layer LK shows the logo on. */
-#define LK_FB_BASE           0x7e250000ULL
-#define LK_FB_SIZE           0x00fb0000ULL
+#define LK_FB_BASE           0x787b0000ULL
+#define LK_FB_SIZE           0x1050000ULL
 #define LK_FB_PITCH          2944u      /* 736 pixels: LK aligns the width to 32 */
 #define PANEL_W              720u
-#define PANEL_H              1600u
+#define PANEL_H              1640u
 
 #define DISP_MUTEX_EN        0x14001020ULL
 #define DISP_MUTEX_RUN       0x14001024ULL
