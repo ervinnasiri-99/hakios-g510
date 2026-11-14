@@ -52,6 +52,7 @@ jobs:
       - name: Build mtkloader
         run: |
           export HAKIOS_SERIAL=dummy
+          chmod +x mtkloader/build.sh
           cd mtkloader
           ./build.sh
         env:
