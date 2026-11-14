@@ -37,9 +37,11 @@ jobs:
 
       - name: Install zig (for ld.lld)
         run: |
-          wget -q https://github.com/ziglang/zig/releases/download/0.13.0/zig-linux-x86_64-0.13.0.tar.xz -O zig.tar.xz
+          wget -q https://github.com/ziglang/zig/releases/download/0.13.0/zig-bootstrap-0.13.0.tar.xz -O zig.tar.xz
           tar -xf zig.tar.xz
-          echo "$(pwd)/zig-linux-x86_64-0.13.0" >> $GITHUB_PATH
+          echo "$(pwd)/zig-bootstrap-0.13.0" >> $GITHUB_PATH
+          mkdir -p xnu-deps/host/zig
+          ln -sf "$(pwd)/zig-bootstrap-0.13.0/zig" xnu-deps/host/zig/zig
 
       - name: Setup theos (cctools-port + iPhoneOS16.5.sdk)
         run: |
