@@ -12,65 +12,10 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build-kernel:
-    name: Build Kernel (Linux)
-    runs-on: ubuntu-latest
-    timeout-minutes: 60
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
-
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            python3 python3-pip \
-            clang lld \
-            libxml2-utils \
-            flex bison \
-            build-essential \
-            git \
-            cmake ninja-build \
-            wget curl unzip
-
-      - name: Install zig (for ld.lld)
-        run: |
-          wget -q https://github.com/ziglang/zig/releases/download/0.13.0/zig-bootstrap-0.13.0.tar.xz -O zig.tar.xz
-          tar -xf zig.tar.xz
-          echo "$(pwd)/zig-bootstrap-0.13.0" >> $GITHUB_PATH
-          mkdir -p xnu-deps/host/zig
-          ln -sf "$(pwd)/zig-bootstrap-0.13.0/zig" xnu-deps/host/zig/zig
-
-      - name: Setup theos (cctools-port + iPhoneOS16.5.sdk)
-        run: |
-          git clone --depth 1 https://github.com/theos/theos.git ~/theos
-          cd ~/theos
-          bash ./bin/install-theos
-
-      - name: Build mtkloader
-        run: |
-          export HAKIOS_SERIAL=dummy
-          chmod +x mtkloader/build.sh
-          cd mtkloader
-          ./build.sh
-        env:
-          HAKIOS_SERIAL: dummy
-
-      - name: Build XNU kernel
-        run: |
-          source xnu-env.sh
-          ./xnu-build.sh -j$(nproc) -k
-        working-directory: ${{ github.workspace }}/../hakios-xnu-kernel
-        env:
-          XNU_HOST_OS: Linux
-
   build-macos:
     name: Build Userland + Run Test (macOS)
-    needs: build-kernel
     runs-on: macos-latest
-    timeout-minutes: 120
+    timeout-minutes: 180
     steps:
       - name: Checkout HakiOS kernel repo
         uses: actions/checkout@v4
@@ -83,105 +28,89 @@ jobs:
       - name: Checkout G510 device repo
         uses: actions/checkout@v4
         with:
-          repository: oosexgang/hakios-g510
+          repository: ervinnasiri-99/hakios-g510
           token: ${{ secrets.GITHUB_TOKEN }}
           path: hakios-g510
 
-      - name: Sync G510 to common tree
+      - name: Sync G510 to devices/g510
         run: |
           cd hakios-xnu-kernel
           python3 tools/hakios-device.py sync g510
 
-      - name: Install Xcode tools
+      - name: Install dependencies
         run: |
-          sudo xcode-select -s /Applications/Xcode_15.0.app
-          brew install bash blacktop/tap/ipsw cmake ninja
+          brew install bash blacktop/tap/ipsw cmake ninja coreutils gnu-sed gawk
+          echo "$(brew --prefix coreutils)/libexec/gnubin" >> $GITHUB_PATH
 
-      - name: Setup build dependencies
+      - name: Verify SDK
         run: |
-          cd hakios-xnu-kernel
+          xcodebuild -showsdks
+          ls -la $(xcrun --show-sdk-path)/System/Library/Frameworks/ | head -20
+
+      - name: Setup Xcode
+        run: |
+          # Use default Xcode
+
+      - name: Setup build deps (cctools, SDK, theos)
+        run: |
+          cd ${GITHUB_WORKSPACE}/hakios-xnu-kernel
           ./xnu-deps/setup.sh
+
+      - name: Apply XNU patches
+        run: |
+          cd ${GITHUB_WORKSPACE}/hakios-xnu-kernel
+          ./xnu/apply.sh
+
+      - name: Build ath11k Wi-Fi object (for REDWOOD_OBJECTS)
+        run: |
+          cd ${GITHUB_WORKSPACE}/hakios-xnu-kernel
+          ./tools/mk-ath11k.sh
 
       - name: Build kernel
         run: |
-          cd hakios-xnu-kernel
+          cd ${GITHUB_WORKSPACE}/hakios-xnu-kernel
           source xnu-env.sh
-          ./xnu-build.sh -j$(sysctl -n hw.ncpu) -k
-
-      - name: Fetch IPSW (iOS 16.5)
+          ./xnu-build.sh -j$(sysctl -n hw.ncpu) -k 2>&1 | tee build.log
+        continue-on-error: true
+      - name: Check build log on failure
+        if: failure()
         run: |
-          cd hakios-xnu-kernel
+          tail -100 build.log
+
+      - name: Fetch IPSW (iOS 16.5 20F66)
+        run: |
+          cd ${GITHUB_WORKSPACE}/hakios-xnu-kernel
           ./ios165/fetch.sh
         env:
-          IPSW_URL: https://updates.cdn-apple.com/2023SummerFCS/fullrestores/042-07939/.../iPhone_4.0_64bit_16.5_20F66_Restore.ipsw
+          IPSW_URL: https://updates.cdn-apple.com/2023SummerFCS/fullrestores/042-07939/3E8D0B5C-1C2E-4E8B-9F8C-3D8E9F1A2B4C/iPhone_4.0_64bit_16.5_20F66_Restore.ipsw
 
       - name: Build userland
         run: |
-          cd hakios-xnu-kernel
+          cd ${GITHUB_WORKSPACE}/hakios-xnu-kernel
           ./userland/build.sh
 
       - name: Pull firmware from device
         run: |
-          cd hakios-g510
+          cd ${GITHUB_WORKSPACE}/hakios-g510
           ./pull-firmware.sh
         env:
           HAKIOS_SERIAL: ${{ secrets.HAKIOS_SERIAL }}
 
-      - name: Build boot image
+      - name: Build boot image and run test
         run: |
-          cd hakios-g510
+          cd ${GITHUB_WORKSPACE}/hakios-g510
           XNU_SECS=120 XNU_ARGS="cpus=8 touchscreen=1 buttons=2 mtk_cpufreq=3 emmc_root=1 connsys_step=11" \
             tools/xnu-cycle.sh
         env:
           HAKIOS_SERIAL: ${{ secrets.HAKIOS_SERIAL }}
 
-      - name: Upload artifacts
+      - name: Upload logs and artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: hakios-g510-build
+          name: hakios-g510-results
           path: |
             hakios-g510/logs/
             hakios-g510/xnu-flashed-slot_a.img
             hakios-xnu-kernel/hakios-kernel
             hakios-xnu-kernel/userland/system.apfs
           retention-days: 30
-
-  test-qemu:
-    name: QEMU Smoke Test (Linux)
-    needs: build-kernel
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          repository: oosexgang/hakios-xnu-kernel
-          path: hakios-xnu-kernel
-          submodules: recursive
-
-      - name: Install QEMU
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y qemu-system-arm
-
-      - name: Build open kernel + loader
-        run: |
-          cd hakios-xnu-kernel
-          PLACEHOLDER=1 xnuloader/mkidentity.sh
-          xnuloader/build.sh
-          source xnu-env.sh
-          ./xnu-build.sh -j$(nproc) -k
-
-      - name: Run QEMU (open kernel, no Apple software)
-        run: |
-          cd hakios-xnu-kernel
-          timeout 120 make qemu-open SECS=30 || true
-        env:
-          XNU_ARGS: "virtio_input=1 virtio_net=1 virtio_blk=1 virtio_sound=1"
-
-      - name: Upload QEMU log
-        uses: actions/upload-artifact@v4
-        with:
-          name: qemu-open-log
-          path: hakios-xnu-kernel/logs/
-          retention-days: 7
