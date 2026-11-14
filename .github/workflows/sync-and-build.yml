@@ -24,7 +24,7 @@ jobs:
       - name: Checkout hakios-g510
         uses: actions/checkout@v4
         with:
-          repository: oosexgang/hakios-g510
+          repository: ervinnasiri-99/hakios-g510
           token: ${{ secrets.GITHUB_TOKEN }}
           path: hakios-g510
 
