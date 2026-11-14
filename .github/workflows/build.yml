@@ -40,7 +40,7 @@ jobs:
           # Copy device.conf and configs from device repo root
           cp ${GITHUB_WORKSPACE}/hakios-g510/device.conf ${GITHUB_WORKSPACE}/hakios-xnu-kernel/devices/g510/
           cp -r ${GITHUB_WORKSPACE}/hakios-g510/configs ${GITHUB_WORKSPACE}/hakios-xnu-kernel/devices/g510/
-          # Copy drivers/ directory for hakios-config.py to find device drivers
+          # Copy device drivers/ for hakios-config.py
           cp -r ${GITHUB_WORKSPACE}/hakios-g510/kernel/drivers ${GITHUB_WORKSPACE}/hakios-xnu-kernel/devices/g510/
           # Copy SoC layer to socs/mt6765/ (where hakios-config.py expects it)
           mkdir -p ${GITHUB_WORKSPACE}/hakios-xnu-kernel/socs/mt6765
