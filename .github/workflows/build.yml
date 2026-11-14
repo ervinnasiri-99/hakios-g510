@@ -47,7 +47,7 @@ jobs:
         run: |
           git clone --depth 1 https://github.com/theos/theos.git ~/theos
           cd ~/theos
-          bash ./bootstrap/bootstrap.sh linux
+          bash ./bin/install-theos
 
       - name: Build mtkloader
         run: |
