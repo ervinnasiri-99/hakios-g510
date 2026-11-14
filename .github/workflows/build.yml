@@ -32,11 +32,6 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           path: hakios-g510
 
-      - name: Sync G510 to devices/g510
-        run: |
-          cd hakios-xnu-kernel
-          python3 tools/hakios-device.py sync g510
-
       - name: Install dependencies
         run: |
           brew install bash blacktop/tap/ipsw cmake ninja coreutils gnu-sed gawk
