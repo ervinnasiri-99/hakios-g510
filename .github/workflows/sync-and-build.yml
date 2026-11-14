@@ -28,6 +28,18 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           path: hakios-g510
 
+      - name: Copy G510 configs to kernel repo
+        run: |
+          cp -r ${GITHUB_WORKSPACE}/hakios-g510/configs ${GITHUB_WORKSPACE}/hakios-xnu-kernel/configs/
+          ls -la ${GITHUB_WORKSPACE}/hakios-xnu-kernel/configs/
+
+      - name: Copy G510 kernel drivers to kernel repo
+        run: |
+          mkdir -p ${GITHUB_WORKSPACE}/hakios-xnu-kernel/devices/g510
+          cp -r ${GITHUB_WORKSPACE}/hakios-g510/kernel ${GITHUB_WORKSPACE}/hakios-xnu-kernel/devices/g510/
+          cp ${GITHUB_WORKSPACE}/hakios-g510/device.conf ${GITHUB_WORKSPACE}/hakios-xnu-kernel/devices/g510/
+          ls -la ${GITHUB_WORKSPACE}/hakios-xnu-kernel/devices/g510/
+
       - name: Install dependencies
         run: |
           brew install bash blacktop/tap/ipsw cmake ninja coreutils gnu-sed gawk
@@ -56,6 +68,12 @@ jobs:
         run: |
           cd ${GITHUB_WORKSPACE}/hakios-xnu-kernel
           ./tools/mk-ath11k.sh
+
+      - name: Configure kernel for G510
+        run: |
+          cd ${GITHUB_WORKSPACE}/hakios-xnu-kernel
+          python3 tools/hakios-config.py defconfig g510 .config
+          python3 tools/hakios-config.py kernel --tree xnu-src/xnu-8796.121.2
 
       - name: Build kernel
         run: |
