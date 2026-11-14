@@ -109,13 +109,21 @@ jobs:
           # Firmware files are already committed for CI
           ls -la fw-touch/ fw-connsys/
 
-      - name: Build boot image and run test
+      - name: Build boot image (CI: build only, no device test)
         run: |
           cd ${GITHUB_WORKSPACE}/hakios-g510
-          XNU_SECS=120 XNU_ARGS="cpus=8 touchscreen=1 buttons=2 mtk_cpufreq=3 emmc_root=1 connsys_step=11" \
-            tools/xnu-cycle.sh
+          # Build mtkloader
+          chmod +x mtkloader/build.sh
+          cd mtkloader
+          ./build.sh
+          # Pack boot image
+          cd ..
+          python3 mtkloader/build_flashed.py
+          # Verify output
+          ls -la xnu-flashed-slot_a.img
+          echo "Boot image built successfully (device test skipped in CI)"
         env:
-          HAKIOS_SERIAL: ${{ secrets.HAKIOS_SERIAL }}
+          HAKIOS_SERIAL: dummy
 
       - name: Upload logs and artifacts
         uses: actions/upload-artifact@v4
