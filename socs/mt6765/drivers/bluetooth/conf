@@ -1,0 +1,14 @@
+# drivers/bluetooth/conf: Bluetooth on MediaTek CONNSYS.
+# CONFIG_HAKIOS_<NAME>=y in a defconfig builds a driver into the kernel; "standard" files are always built.
+# tools/hakios-config.py reads this file; docs/drivers-config.md says what each word means and how it reaches XNU.
+
+driver MTK_CONNSYS
+	file    bsd/dev/hakios.mtk_connsys.c
+	help    CONNSYS (Wi-Fi/Bluetooth): power, firmware, the MCU patch (PDA), BTIF, STP/WMT, connsys_sw_init;
+	help    Bluetooth's function on, HCI over STP channel 0, the kernel control com.apple.uart.sk.bluetooth
+	help    and the answers bluetoothd needs changed. Boot-arg connsys_step=N.
+
+driver MTK_BT
+	file    bsd/dev/hakios.mtk_bt.c
+	help    Bluetooth transport for MT6765 (MT6631 in CONNSYS). Reuses BTIF from hakios.mtk_connsys.c
+	help    for H4 over STP channel 0. Boot-arg mtkbt_skel=1.

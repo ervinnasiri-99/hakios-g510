@@ -1,0 +1,13 @@
+# drivers/camera/conf: cameras on MT6765.
+# CONFIG_HAKIOS_<NAME>=y in a defconfig builds a driver into the kernel; "standard" files are always built.
+# tools/hakios-config.py reads this file; docs/drivers-config.md says what each word means and how it reaches XNU.
+
+driver MTK_CAMERA
+	file    bsd/dev/hakios.mtk_camera.c
+	help    the cameras (cam=5): register tables from the sensor modules, CSI/ISP, V4L2
+	requires MTK_CONNSYS
+
+driver MTK_TORCH
+	file    bsd/dev/hakios.mtk_torch.c
+	help    the flashlight/torch (torch=1)
+	requires MTK_CAMERA

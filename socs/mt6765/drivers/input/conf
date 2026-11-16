@@ -1,0 +1,14 @@
+# drivers/input/conf: touch, buttons, and the queue they post to.
+# CONFIG_HAKIOS_<NAME>=y in a defconfig builds a driver into the kernel; "standard" files are always built.
+# tools/hakios-config.py reads this file; docs/drivers-config.md says what each word means and how it reaches XNU.
+
+standard bsd/dev/hakios.input.c
+	help    /dev/hakios-touch, the queue of touches and buttons, and where the phone's drivers are started from
+
+driver MTK_TCM
+	file    bsd/dev/hakios.mtk_tcm.c
+	help    the touch screen: Novatek NT36525 on SPI0 (touchscreen=1). The loader sends its firmware.
+
+driver MTK_KEYS
+	file    bsd/dev/hakios.mtk_keys.c
+	help    the power and volume keys, read from the keypad at 0x10010000 (buttons=1)

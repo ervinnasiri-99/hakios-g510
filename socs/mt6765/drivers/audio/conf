@@ -1,0 +1,8 @@
+# drivers/audio/conf: audio on MT6765.
+# CONFIG_HAKIOS_<NAME>=y in a defconfig builds a driver into the kernel; "standard" files are always built.
+# tools/hakios-config.py reads this file; docs/drivers-config.md says what each word means and how it reaches XNU.
+
+driver MTK_AUDIO
+	file    bsd/dev/hakios.mtk_audio.c
+	help    the audio DSP and its firmware (adsp=1, sound=4, mic=4 for the G510's path)
+	requires MTK_CONNSYS

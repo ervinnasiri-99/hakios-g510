@@ -5,6 +5,7 @@
 #   fw-touch/novatek_ts_fw.bin   the touch controller's (Novatek NT36525 on SPI0): the loader carries it
 #                               (mtkloader/tcm.h; mtkloader/build.sh makes touchfw.h out of it)
 #   fw-connsys/                 CONNSYS's, for Wi-Fi and Bluetooth (docs/wifi-x6826b.md)
+#   fw-pvr/                     PowerVR GPU firmware (pvr_rogue_fw.bin, etc.)
 #
 # Android keeps them where the shell user cannot read (SELinux), so this needs root on the phone
 # (Magisk's su): they are copied to a temporary folder, pulled, and the folder is removed. Read only:
@@ -26,13 +27,21 @@ CONNSYS=(
     wifi.cfg
     BT_FW.cfg
 )
+PVR_SRC=(
+    rgx.fw
+    rgx.sh
+)
 
 adb -s "$S" shell "su -c 'rm -rf $TMP; mkdir -p $TMP; \
-    for f in ${CONNSYS[@]}; do cp /vendor/firmware/\$f $TMP/; done; \
-    cp \$(find /vendor/firmware /vendor/etc -name novatek_ts_fw.bin 2>/dev/null | head -1) $TMP/; \
+    for f in ${CONNSYS[@]}; do cp /vendor/firmware/\$f $TMP/ 2>/dev/null; done; \
+    for f in ${PVR_SRC[@]}; do cp /vendor/firmware/\$f $TMP/ 2>/dev/null; done; \
+    cp \$(find /vendor/firmware /vendor/etc -name novatek_ts_fw.bin 2>/dev/null | head -1) $TMP/ 2>/dev/null; \
     chmod 644 $TMP/*'"
-mkdir -p "$OUT/fw-touch" "$OUT/fw-connsys"
-adb -s "$S" pull "$TMP/novatek_ts_fw.bin" "$OUT/fw-touch/" >/dev/null
-for f in "${CONNSYS[@]}"; do adb -s "$S" pull "$TMP/$f" "$OUT/fw-connsys/" >/dev/null; done
+mkdir -p "$OUT/fw-touch" "$OUT/fw-connsys" "$OUT/fw-pvr"
+adb -s "$S" pull "$TMP/novatek_ts_fw.bin" "$OUT/fw-touch/" >/dev/null 2>&1
+for f in "${CONNSYS[@]}"; do adb -s "$S" pull "$TMP/$f" "$OUT/fw-connsys/" >/dev/null 2>&1; done
+# Rename to names expected by the driver
+adb -s "$S" pull "$TMP/rgx.fw" "$OUT/fw-pvr/pvr_rogue_fw.bin" >/dev/null 2>&1
+adb -s "$S" pull "$TMP/rgx.sh" "$OUT/fw-pvr/pvr_mmu_fw.bin" >/dev/null 2>&1
 adb -s "$S" shell "su -c 'rm -rf $TMP'"
-ls -l "$OUT/fw-touch" "$OUT/fw-connsys"
+ls -l "$OUT/fw-touch" "$OUT/fw-connsys" "$OUT/fw-pvr"

@@ -10,7 +10,7 @@ OUT=${XNU_LOG_OUT:-$ROOT/logs/xnu-last.log}
 # XNU_SECS: how long the kernel runs before it hands the log back (the watcher waits a bit longer)
 SECS=${XNU_SECS:-45}
 # XNU_ARGS: the kernel's own command line (cores and so on); the clock comes from this machine
-XNU_ARGS=${XNU_ARGS:-cpus=8 touchscreen=1 buttons=2 mtk_cpufreq=3 emmc_root=1}
+XNU_ARGS=${XNU_ARGS:-cpus=8 touchscreen=1 buttons=2 mtk_cpufreq=3 emmc_root=1 connsys_step=11 mtkbt_skel=1 audio=1 adsp=1 sound=4 mic=4 mali=1 sensors=1 camera=1 thermal=1 thermal_stop=105}
 # the device tree offers the kernel exactly this many cores; "cpus=" in XNU_ARGS should match
 CORES=${XNU_CORES:-$(expr "$XNU_ARGS" : '.*cpus=\([0-9]*\)' || echo 1)}
 [ -n "$CORES" ] || CORES=1

@@ -1,6 +1,7 @@
 # Nothing of Apple's and nothing of the vendor's (LEGAL.md): firmware is pulled from your own phone,
 # the iOS image is built from your own IPSW, and the two headers mtkloader/build.sh makes are never kept.
 fw-*/
+fw-pvr/
 mtkloader/touchfw.h
 mtkloader/font8x16.h
 # the camera's register tables are the vendor's: made by tools/camtable.py and tools/camrx.py from your own phone

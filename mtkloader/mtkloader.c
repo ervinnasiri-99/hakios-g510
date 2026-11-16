@@ -90,6 +90,10 @@ static const uint8_t core_order[8] = { 0, 1, 2, 3, 4, 5, 6, 7 };
 #ifndef GPU_PROBE
 #define GPU_PROBE           0
 #endif
+/* 1: wake the PowerVR GPU and ask it what it is (tools/pvr-probe.sh); then Android. */
+#ifndef PVR_PROBE
+#define PVR_PROBE           0
+#endif
 /* 1: read the camera's pins, rails and I2C controller and report, if Android asked for it (tools/cam-probe.sh); then Android. */
 #ifndef CAM_PROBE
 #define CAM_PROBE           0

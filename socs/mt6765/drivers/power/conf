@@ -1,0 +1,21 @@
+# drivers/power/conf: the battery, the processor's clock, temperatures, the PMICs, the guards of a run left alone.
+# CONFIG_HAKIOS_<NAME>=y in a defconfig builds a driver into the kernel; "standard" files are always built.
+# tools/hakios-config.py reads this file; docs/drivers-config.md says what each word means and how it reaches XNU.
+
+driver MTK_CPUFREQ
+	file    bsd/dev/hakios.mtk_cpufreq.c
+	help    the clock of the cores the kernel runs on (cpufreq=1), and the memory bus's votes (ddr=) for MT6765
+
+driver MTK_THERMAL
+	file    bsd/dev/hakios.mtk_thermal.c
+	help    the SoC's temperature sensors (thermal=1): kern.hakios.thermal_*, and the run handed back to the
+	help    loader when the phone gets too hot (thermal_stop=) for MT6765
+
+driver MTK_PMIC
+	file    bsd/dev/hakios.mtk_pmic.c
+	help    the blocks of the power-management chips the SPMI arbiter shows, and the PMIC's clock (pmic=1); read only
+
+driver MTK_BATTERY
+	file    bsd/dev/hakios.mtk_battery.c
+	help    the battery: kern.hakios.battery_*, and HakiosBattery, the IOPMPowerSource Darwin reads the charge from
+	help    (the state comes from the MT6358 fuel gauge, with mtkbatt=1)

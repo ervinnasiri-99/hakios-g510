@@ -1,0 +1,8 @@
+# drivers/gpu/conf: the PowerVR GE8320 GPU on MT6765.
+# CONFIG_HAKIOS_<NAME>=y in a defconfig builds a driver into the kernel; "standard" files are always built.
+# tools/hakios-config.py reads this file; docs/drivers-config.md says what each word means and how it reaches XNU.
+
+driver MTK_PVRGPU
+	file    bsd/dev/hakios.mtk_pvr_gpu.c
+	help    PowerVR GE8320 GPU driver (pvr=1): clocks, power domains, firmware load, MMU, test job.
+	help    Firmware: ELF32 MIPS (pvr_rogue_fw.bin) from /fw/pvr/ on the system image.

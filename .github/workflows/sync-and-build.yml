@@ -36,21 +36,17 @@ jobs:
           # Copy device.conf and configs from device repo root
           cp ${GITHUB_WORKSPACE}/hakios-g510/device.conf ${GITHUB_WORKSPACE}/hakios-xnu-kernel/devices/g510/
           cp -r ${GITHUB_WORKSPACE}/hakios-g510/configs ${GITHUB_WORKSPACE}/hakios-xnu-kernel/devices/g510/
-          # Copy device drivers/ for hakios-config.py
-          cp -r ${GITHUB_WORKSPACE}/hakios-g510/kernel/drivers ${GITHUB_WORKSPACE}/hakios-xnu-kernel/devices/g510/
-          # Copy SoC layer to socs/mt6765/ (where hakios-config.py expects it)
-          mkdir -p ${GITHUB_WORKSPACE}/hakios-xnu-kernel/socs/mt6765
-          cp -r ${GITHUB_WORKSPACE}/hakios-g510/kernel/soc ${GITHUB_WORKSPACE}/hakios-xnu-kernel/socs/mt6765/
-          # Copy bsd/ (driver source files) to devices/g510/
-          cp -r ${GITHUB_WORKSPACE}/hakios-g510/kernel/bsd ${GITHUB_WORKSPACE}/hakios-xnu-kernel/devices/g510/
+          # Copy SoC layer for hakios-config.py
+          cp -r ${GITHUB_WORKSPACE}/hakios-g510/socs ${GITHUB_WORKSPACE}/hakios-xnu-kernel/
           ls -la ${GITHUB_WORKSPACE}/hakios-xnu-kernel/devices/g510/
+          ls -la ${GITHUB_WORKSPACE}/hakios-xnu-kernel/socs/mt6765/
 
       - name: Install dependencies
         run: |
           brew install bash blacktop/tap/ipsw cmake ninja coreutils gnu-sed gawk
           echo "$(brew --prefix coreutils)/libexec/gnubin" >> $GITHUB_PATH
 
-- name: Verify SDK
+      - name: Verify SDK
         run: |
           xcodebuild -showsdks
           ls -la $(xcrun --show-sdk-path)/System/Library/Frameworks/ | head -20
@@ -123,12 +119,12 @@ jobs:
           cd ${GITHUB_WORKSPACE}/hakios-xnu-kernel
           ./userland/build.sh
 
-      - name: Prepare firmware (copy from repo for CI)
+      - name: Prepare firmware directories (CI: firmware not committed, dirs created for build)
         run: |
           cd ${GITHUB_WORKSPACE}/hakios-g510
-          mkdir -p fw-touch fw-connsys
-          # Firmware files are already committed for CI
-          ls -la fw-touch/ fw-connsys/
+          mkdir -p fw-touch fw-connsys fw-pvr
+          # Firmware is not committed (vendor's), dirs created for build to proceed
+          ls -la fw-touch/ fw-connsys/ fw-pvr/
 
       - name: Build boot image (CI: build only, no device test)
         run: |
