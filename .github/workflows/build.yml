@@ -21,7 +21,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: oosexgang/hakios-xnu-kernel
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.HAKIOS_XNU_KERNEL_PAT }}
           path: hakios-xnu-kernel
           ref: main
           submodules: recursive
@@ -29,8 +29,6 @@ jobs:
       - name: Checkout G510 device repo
         uses: actions/checkout@v4
         with:
-          repository: ervinnasiri-99/hakios-g510
-          token: ${{ secrets.GITHUB_TOKEN }}
           path: hakios-g510
 
       - name: Copy G510 device files to kernel repo
