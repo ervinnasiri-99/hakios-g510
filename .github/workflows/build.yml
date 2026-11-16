@@ -21,41 +21,44 @@ jobs:
           ref: main
           submodules: recursive
 
-      - name: Python compiles
+      - name: Python compiles (device repo only)
         run: |
-          cd ${GITHUB_WORKSPACE}/hakios-xnu-kernel
+          cd ${GITHUB_WORKSPACE}/hakios-g510
           git ls-files '*.py' | xargs -r python3 -m py_compile
 
-      - name: Shell scripts parse
+      - name: Shell scripts parse (device repo only)
         run: |
-          cd ${GITHUB_WORKSPACE}/hakios-xnu-kernel
+          cd ${GITHUB_WORKSPACE}/hakios-g510
           git ls-files '*.sh' xl | xargs -r -n1 bash -n
 
-      - name: Scripts executable in git
+      - name: Scripts executable in git (device repo only)
         run: |
-          cd ${GITHUB_WORKSPACE}/hakios-xnu-kernel
+          cd ${GITHUB_WORKSPACE}/hakios-g510
           bad=$(git ls-files -s | awk '$1=="100644"{print $4}' | while read -r f; do
             case "$f" in *.sh|*.py|xl) head -c2 "$f" | grep -q '^#!' && echo "$f";; esac; done)
           if [ -n "$bad" ]; then echo "not executable in git (git update-index --chmod=+x):"; echo "$bad"; exit 1; fi
 
-      - name: Makefile help
+      - name: Device repo structure check
         run: |
-          cd ${GITHUB_WORKSPACE}/hakios-xnu-kernel
-          make help
+          cd ${GITHUB_WORKSPACE}/hakios-g510
+          python3 ${GITHUB_WORKSPACE}/hakios-xnu-kernel/tools/hakios-device.py check g510
 
       - name: Provenance check
         run: |
           cd ${GITHUB_WORKSPACE}/hakios-xnu-kernel
           python3 tools/provenance-check.py
 
-      - name: Drivers check
+      - name: Provenance test
         run: |
           cd ${GITHUB_WORKSPACE}/hakios-xnu-kernel
+          python3 tools/provenance-test.py
+
+      - name: Drivers check
+        run: |
           python3 tools/drivers-check.py
 
       - name: Configurations check
         run: |
-          cd ${GITHUB_WORKSPACE}/hakios-xnu-kernel
           python3 tools/hakios-config-test.py
 
       - name: Boot args check
@@ -63,18 +66,36 @@ jobs:
           python3 tools/boot-args-test.py
           python3 tools/boot-args.py --check
 
-      - name: Drivers kept by subsystem
+      - name: Device repo structure check
+        run: |
+          python3 tools/hakios-device.py check g510
+
+      - name: Provenance check
+        run: |
+          cd ${GITHUB_WORKSPACE}/hakios-xnu-kernel
+          python3 tools/provenance-check.py
+
+      - name: Provenance test
+        run: |
+          cd ${GITHUB_WORKSPACE}/hakios-xnu-kernel
+          python3 tools/provenance-test.py
+
+      - name: Drivers check
         run: |
           python3 tools/drivers-check.py
 
-      - name: Device and SoC repositories check
+      - name: Configurations check
         run: |
-          python3 tools/hakios-device.py check
-          python3 tools/hakios-device-test.py
+          python3 tools/hakios-config-test.py
 
-      - name: Documentation pages current
+      - name: Boot args check
         run: |
-          python3 tools/docs-check.py
+          python3 tools/boot-args-test.py
+          python3 tools/boot-args.py --check
+
+      - name: Device repo structure check
+        run: |
+          python3 tools/hakios-device.py check g510
 
       - name: Kernel patch applies
         run: |
