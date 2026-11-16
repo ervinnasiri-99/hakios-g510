@@ -5,7 +5,136 @@ on:
     branches: [main]
 
 jobs:
-  build:
+  build-macos:
+    name: Build Userland + Run Test (macOS)
     runs-on: macos-latest
+    timeout-minutes: 180
     steps:
-      - run: echo "Build test passed"
+      - name: Checkout HakiOS kernel repo
+        uses: actions/checkout@v4
+        with:
+          repository: oosexgang/hakios-xnu-kernel
+          path: hakios-xnu-kernel
+          ref: main
+          submodules: recursive
+
+      - name: Checkout G510 device repo
+        uses: actions/checkout@v4
+        with:
+          path: hakios-g510
+
+      - name: Copy G510 device files to kernel repo
+        run: |
+          rm -rf ${GITHUB_WORKSPACE}/hakios-xnu-kernel/devices/g510
+          mkdir -p ${GITHUB_WORKSPACE}/hakios-xnu-kernel/devices/g510
+          cp ${GITHUB_WORKSPACE}/hakios-g510/device.conf ${GITHUB_WORKSPACE}/hakios-xnu-kernel/devices/g510/
+          cp -r ${GITHUB_WORKSPACE}/hakios-g510/configs ${GITHUB_WORKSPACE}/hakios-xnu-kernel/devices/g510/
+          cp -r ${GITHUB_WORKSPACE}/hakios-g510/socs ${GITHUB_WORKSPACE}/hakios-xnu-kernel/
+          ls -la ${GITHUB_WORKSPACE}/hakios-xnu-kernel/devices/g510/
+          ls -la ${GITHUB_WORKSPACE}/hakios-xnu-kernel/socs/mt6765/
+
+      - name: Install dependencies
+        run: |
+          brew install bash blacktop/tap/ipsw cmake ninja coreutils gnu-sed gawk
+          echo "$(brew --prefix coreutils)/libexec/gnubin" >> $GITHUB_PATH
+
+      - name: Copy ios165 to workspace
+        run: |
+          cp -r ${GITHUB_WORKSPACE}/hakios-xnu-kernel/ios165 ${GITHUB_WORKSPACE}/ios165
+          ls -la ${GITHUB_WORKSPACE}/ios165/
+
+      - name: Verify SDK
+        run: |
+          xcodebuild -showsdks
+          ls -la $(xcrun --show-sdk-path)/System/Library/Frameworks/ | head -20
+
+      - name: Setup Xcode
+        run: |
+          # Use default Xcode
+
+      - name: Setup build deps (cctools, SDK, theos)
+        run: |
+          cd ${GITHUB_WORKSPACE}/hakios-xnu-kernel
+          ./xnu-deps/setup.sh
+
+      - name: Apply XNU patches
+        run: |
+          cd ${GITHUB_WORKSPACE}/hakios-xnu-kernel
+          ./xnu/apply.sh
+
+      - name: Build ath11k Wi-Fi object (for REDWOOD_OBJECTS)
+        run: |
+          cd ${GITHUB_WORKSPACE}/hakios-xnu-kernel
+          ./tools/mk-ath11k.sh
+
+      - name: Configure kernel for G510
+        run: |
+          cd ${GITHUB_WORKSPACE}/hakios-xnu-kernel
+          python3 tools/hakios-config.py defconfig g510 .config
+          python3 tools/hakios-config.py kernel --tree xnu-src/xnu-8796.121.2
+
+      - name: Build kernel
+        run: |
+          cd ${GITHUB_WORKSPACE}/hakios-xnu-kernel
+          source xnu-env.sh
+          ./xnu-build.sh -j$(sysctl -n hw.ncpu) -k LD_KERNEL_ARCHIVES="" 2>&1 | tee build.log
+        continue-on-error: true
+      - name: Check build log on failure
+        if: failure()
+        run: |
+          tail -100 build.log
+
+      - name: Fetch IPSW (iOS 16.5 20F66)
+        run: |
+          cd ${GITHUB_WORKSPACE}
+          ./ios165/fetch.sh
+        env:
+          IPSW_URL: https://updates.cdn-apple.com/2023SummerFCS/fullrestores/042-07939/3E8D0B5C-1C2E-4E8B-9F8C-3D8E9F1A2B4C/iPhone_4.0_64bit_16.5_20F66_Restore.ipsw
+        continue-on-error: true
+      - name: Check IPSW fetch
+        if: failure()
+        run: |
+          ls -la ios165/ 2>/dev/null || echo "ios165 not in workspace"
+          ls -la ${GITHUB_WORKSPACE}/ios165/ 2>/dev/null || echo "ios165 not in workspace root"
+      - name: Fetch IPSW from workspace (fallback)
+        if: failure()
+        run: |
+          cd ${GITHUB_WORKSPACE}
+          ./ios165/fetch.sh
+        env:
+          IPSW_URL: https://updates.cdn-apple.com/2023SummerFCS/fullrestores/042-07939/3E8D0B5C-1C2E-4E8B-9F8C-3D8E9F1A2B4C/iPhone_4.0_64bit_16.5_20F66_Restore.ipsw
+
+      - name: Build userland
+        run: |
+          cd ${GITHUB_WORKSPACE}/hakios-xnu-kernel
+          ./userland/build.sh
+
+      - name: Prepare firmware directories (CI: firmware not committed, dirs created for build)
+        run: |
+          cd ${GITHUB_WORKSPACE}/hakios-g510
+          mkdir -p fw-touch fw-connsys fw-pvr
+          ls -la fw-touch/ fw-connsys/ fw-pvr/
+
+      - name: Build boot image (CI: build only, no device test)
+        run: |
+          cd ${GITHUB_WORKSPACE}/hakios-g510
+          chmod +x mtkloader/build.sh
+          cd mtkloader
+          ./build.sh
+          cd ..
+          python3 mtkloader/build_flashed.py
+          ls -la xnu-flashed-slot_a.img
+          echo "Boot image built successfully (device test skipped in CI)"
+        env:
+          HAKIOS_SERIAL: dummy
+
+      - name: Upload logs and artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: hakios-g510-results
+          path: |
+            hakios-g510/logs/
+            hakios-g510/xnu-flashed-slot_a.img
+            hakios-xnu-kernel/hakios-kernel
+            hakios-xnu-kernel/userland/system.apfs
+          retention-days: 30
