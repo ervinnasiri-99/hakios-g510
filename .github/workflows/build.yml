@@ -1,0 +1,121 @@
+name: G510 Check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: hakios-g510
+
+      - name: Checkout HakiOS kernel repo
+        uses: actions/checkout@v4
+        with:
+          repository: oosexgang/hakios-xnu-kernel
+          path: hakios-xnu-kernel
+          ref: main
+          submodules: recursive
+
+      - name: Python compiles
+        run: |
+          cd ${GITHUB_WORKSPACE}/hakios-xnu-kernel
+          git ls-files '*.py' | xargs -r python3 -m py_compile
+
+      - name: Shell scripts parse
+        run: |
+          cd ${GITHUB_WORKSPACE}/hakios-xnu-kernel
+          git ls-files '*.sh' xl | xargs -r -n1 bash -n
+
+      - name: Scripts executable in git
+        run: |
+          cd ${GITHUB_WORKSPACE}/hakios-xnu-kernel
+          bad=$(git ls-files -s | awk '$1=="100644"{print $4}' | while read -r f; do
+            case "$f" in *.sh|*.py|xl) head -c2 "$f" | grep -q '^#!' && echo "$f";; esac; done)
+          if [ -n "$bad" ]; then echo "not executable in git (git update-index --chmod=+x):"; echo "$bad"; exit 1; fi
+
+      - name: Makefile help
+        run: |
+          cd ${GITHUB_WORKSPACE}/hakios-xnu-kernel
+          make help
+
+      - name: Provenance check
+        run: |
+          cd ${GITHUB_WORKSPACE}/hakios-xnu-kernel
+          python3 tools/provenance-check.py
+
+      - name: Drivers check
+        run: |
+          cd ${GITHUB_WORKSPACE}/hakios-xnu-kernel
+          python3 tools/drivers-check.py
+
+      - name: Configurations check
+        run: |
+          cd ${GITHUB_WORKSPACE}/hakios-xnu-kernel
+          python3 tools/hakios-config-test.py
+
+      - name: Boot args check
+        run: |
+          python3 tools/boot-args-test.py
+          python3 tools/boot-args.py --check
+
+      - name: Drivers kept by subsystem
+        run: |
+          python3 tools/drivers-check.py
+
+      - name: Device and SoC repositories check
+        run: |
+          python3 tools/hakios-device.py check
+          python3 tools/hakios-device-test.py
+
+      - name: Documentation pages current
+        run: |
+          python3 tools/docs-check.py
+
+      - name: Kernel patch applies
+        run: |
+          git clone -q --depth 1 --branch xnu-8796.121.2 https://github.com/apple-oss-distributions/xnu.git /tmp/xnu
+          git -C /tmp/xnu apply --check "${GITHUB_WORKSPACE}/hakios-xnu-kernel/xnu/hakios.patch"
+
+      - name: SoC args generator test
+        run: |
+          sh tools/soc-args-test.sh
+          python3 tools/soc-args-test-aoss.py
+          python3 tools/soc-args-test-reg.py
+          python3 tools/new-device-test.py
+
+      - name: Device repo structure check
+        run: |
+          cd ${GITHUB_WORKSPACE}/hakios-g510
+          python3 ${GITHUB_WORKSPACE}/hakios-xnu-kernel/tools/hakios-device.py check g510
+
+      - name: Provenance check
+        run: |
+          cd ${GITHUB_WORKSPACE}/hakios-xnu-kernel
+          python3 tools/provenance-check.py
+
+      - name: Provenance test
+        run: |
+          cd ${GITHUB_WORKSPACE}/hakios-xnu-kernel
+          python3 tools/provenance-test.py
+
+      - name: Drivers check
+        run: |
+          python3 tools/drivers-check.py
+
+      - name: Configurations check
+        run: |
+          python3 tools/hakios-config-test.py
+
+      - name: Boot args check
+        run: |
+          python3 tools/boot-args-test.py
+          python3 tools/boot-args.py --check
+
+      - name: Device repo structure check
+        run: |
+          python3 tools/hakios-device.py check g510
