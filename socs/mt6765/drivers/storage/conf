@@ -2,15 +2,6 @@
 # CONFIG_HAKIOS_<NAME>=y in a defconfig builds a driver into the kernel; "standard" files are always built.
 # tools/hakios-config.py reads this file; docs/drivers-config.md says what each word means and how it reaches XNU.
 
-standard bsd/dev/hakios.image.c
-	help    a file of one of the RAM disks by path, for the drivers that load firmware before there is a root
-
-standard bsd/dev/hakios.sparse.c
-	help    /dev/rsp0, a block device over an image that holds only some of its blocks (apfs_sparse=)
-
-standard bsd/dev/hakios.apfs_check.c apfs
-	help    a walk of the APFS volume on /dev/rvblk0 through VFS, to compare with tools/apfs/apfs.py
-
 driver MTK_EMMC
 	file    bsd/dev/hakios.mtk_emmc.c
 	help    the phone's eMMC flash: a block device for each GPT partition (emmc=1, emmc_root=1)
