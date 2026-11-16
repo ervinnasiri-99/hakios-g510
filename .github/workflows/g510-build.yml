@@ -77,26 +77,8 @@ jobs:
           cd ${GITHUB_WORKSPACE}/hakios-xnu-kernel
           source xnu-env.sh
           ./xnu-build.sh -j$(sysctl -n hw.ncpu) -k LD_KERNEL_ARCHIVES="" 2>&1 | tee build.log
-        continue-on-error: true
-      - name: Check build log on failure
-        if: failure()
-        run: |
-          tail -100 build.log
 
       - name: Fetch IPSW (iOS 16.5 20F66)
-        run: |
-          cd ${GITHUB_WORKSPACE}
-          ./ios165/fetch.sh
-        env:
-          IPSW_URL: https://updates.cdn-apple.com/2023SummerFCS/fullrestores/042-07939/3E8D0B5C-1C2E-4E8B-9F8C-3D8E9F1A2B4C/iPhone_4.0_64bit_16.5_20F66_Restore.ipsw
-        continue-on-error: true
-      - name: Check IPSW fetch
-        if: failure()
-        run: |
-          ls -la ios165/ 2>/dev/null || echo "ios165 not in workspace"
-          ls -la ${GITHUB_WORKSPACE}/ios165/ 2>/dev/null || echo "ios165 not in workspace root"
-      - name: Fetch IPSW from workspace (fallback)
-        if: failure()
         run: |
           cd ${GITHUB_WORKSPACE}
           ./ios165/fetch.sh
