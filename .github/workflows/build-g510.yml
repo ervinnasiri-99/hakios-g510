@@ -34,10 +34,8 @@ jobs:
         run: |
           rm -rf ${GITHUB_WORKSPACE}/hakios-xnu-kernel/devices/g510
           mkdir -p ${GITHUB_WORKSPACE}/hakios-xnu-kernel/devices/g510
-          # Copy device.conf and configs from device repo root
           cp ${GITHUB_WORKSPACE}/hakios-g510/device.conf ${GITHUB_WORKSPACE}/hakios-xnu-kernel/devices/g510/
           cp -r ${GITHUB_WORKSPACE}/hakios-g510/configs ${GITHUB_WORKSPACE}/hakios-xnu-kernel/devices/g510/
-          # Copy SoC layer for hakios-config.py
           cp -r ${GITHUB_WORKSPACE}/hakios-g510/socs ${GITHUB_WORKSPACE}/hakios-xnu-kernel/
           ls -la ${GITHUB_WORKSPACE}/hakios-xnu-kernel/devices/g510/
           ls -la ${GITHUB_WORKSPACE}/hakios-xnu-kernel/socs/mt6765/
@@ -122,20 +120,16 @@ jobs:
         run: |
           cd ${GITHUB_WORKSPACE}/hakios-g510
           mkdir -p fw-touch fw-connsys fw-pvr
-          # Firmware is not committed (vendor's), dirs created for build to proceed
           ls -la fw-touch/ fw-connsys/ fw-pvr/
 
       - name: Build boot image (CI: build only, no device test)
         run: |
           cd ${GITHUB_WORKSPACE}/hakios-g510
-          # Build mtkloader
           chmod +x mtkloader/build.sh
           cd mtkloader
           ./build.sh
-          # Pack boot image
           cd ..
           python3 mtkloader/build_flashed.py
-          # Verify output
           ls -la xnu-flashed-slot_a.img
           echo "Boot image built successfully (device test skipped in CI)"
         env:
