@@ -1,13 +1,12 @@
-name: Build HakiOS G510 (MT6765)
+name: G510 Build
 
 on:
   push:
     branches: [main]
 
 jobs:
-  build:
+  g510-build:
     runs-on: macos-latest
-    timeout-minutes: 180
     steps:
       - name: Checkout HakiOS kernel repo
         uses: actions/checkout@v4
