@@ -1,5 +1,5 @@
 /*
- * The power and volume keys for MT6765 (keypad at 0x10010000).
+ * Power and volume keys for MT6765 (keypad at 0x10010000).
  * License: APSL 2.0
  */
 #include <sys/types.h>

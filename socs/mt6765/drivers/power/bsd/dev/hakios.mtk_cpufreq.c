@@ -1,5 +1,5 @@
 /*
- * The clock of the cores the kernel runs on (cpufreq=1), and the memory bus's votes (ddr=) for MT6765.
+ * CPU frequency scaling for MT6765 (cpufreq=1).
  * License: APSL 2.0
  */
 #include <sys/types.h>

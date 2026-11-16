@@ -1,5 +1,5 @@
 /*
- * The flashlight/torch for MT6765 (torch=1).
+ * Flashlight/torch for MT6765 (torch=1).
  * License: APSL 2.0
  */
 #include <sys/types.h>

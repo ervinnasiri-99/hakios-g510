@@ -1,5 +1,5 @@
 /*
- * The chip's identity from the firmware's shared memory for MT6765 (socinfo=1).
+ * Chip identity from firmware's shared memory for MT6765 (socinfo=1).
  * License: APSL 2.0
  */
 #include <sys/types.h>

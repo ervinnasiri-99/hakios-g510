@@ -1,5 +1,5 @@
 /*
- * The battery: MT6358 fuel gauge for MT6765 (mtkbatt=1).
+ * Battery: MT6358 fuel gauge for MT6765 (mtkbatt=1).
  * License: APSL 2.0
  */
 #include <sys/types.h>

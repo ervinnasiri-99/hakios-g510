@@ -1,5 +1,5 @@
 /*
- * The PMIC arbiter blocks and clock for MT6765 (pmic=1).
+ * PMIC arbiter blocks and clock for MT6765 (pmic=1).
  * License: APSL 2.0
  */
 #include <sys/types.h>

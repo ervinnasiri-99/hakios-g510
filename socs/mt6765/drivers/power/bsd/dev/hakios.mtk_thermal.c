@@ -1,5 +1,5 @@
 /*
- * The SoC's temperature sensors (thermal=1) for MT6765.
+ * Temperature sensors for MT6765 (thermal=1).
  * License: APSL 2.0
  */
 #include <sys/types.h>
