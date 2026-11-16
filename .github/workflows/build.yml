@@ -3,12 +3,6 @@ name: Build HakiOS G510 (MT6765)
 on:
   push:
     branches: [main]
-  pull_request:
-    branches: [main]
-
-concurrency:
-  group: ${{ github.ref }}
-  cancel-in-progress: true
 
 jobs:
   build-macos:
