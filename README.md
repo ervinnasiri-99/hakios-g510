@@ -94,3 +94,4 @@ Trigger build
 Trigger build
 trigger
 trigger
+trigger build
