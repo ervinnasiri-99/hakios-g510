@@ -151,4 +151,3 @@ jobs:
             hakios-xnu-kernel/hakios-kernel
             hakios-xnu-kernel/userland/system.apfs
           retention-days: 30
-
