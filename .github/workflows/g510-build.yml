@@ -5,7 +5,7 @@ on:
     branches: [main]
 
 jobs:
-  g510-build:
+  build:
     runs-on: macos-latest
     steps:
       - name: Checkout HakiOS kernel repo
